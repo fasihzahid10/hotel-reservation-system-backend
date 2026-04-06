@@ -1,7 +1,10 @@
 # Standalone backend repo (root = NestJS app). For a full monorepo, use a Dockerfile that targets backend/ from the repo root instead.
-FROM node:20-alpine
+# Debian-based image: Prisma's linux-musl (Alpine) engine needs libssl.so.1.1, which current Alpine images don't ship — use glibc + OpenSSL 3 instead.
+FROM node:20-bookworm-slim
 
 WORKDIR /app
+
+RUN apt-get update -y && apt-get install -y openssl ca-certificates && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm install
