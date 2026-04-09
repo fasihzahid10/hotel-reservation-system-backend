@@ -1,20 +1,24 @@
 import { IsEnum, IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { AppRoomStatus } from '../../common/enums';
 
-export class CreateRoomDto {
+export class UpdateRoomDto {
+  @IsOptional()
   @IsString()
   @MaxLength(10)
-  roomNumber!: string;
+  roomNumber?: string;
 
+  @IsOptional()
   @IsInt()
   @Min(1)
-  floor!: number;
+  floor?: number;
 
+  @IsOptional()
   @IsString()
-  roomTypeId!: string;
+  roomTypeId?: string;
 
+  @IsOptional()
   @IsEnum(AppRoomStatus)
-  housekeepingStatus!: AppRoomStatus;
+  housekeepingStatus?: AppRoomStatus;
 
   @IsOptional()
   @IsString()

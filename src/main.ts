@@ -38,7 +38,7 @@ async function bootstrap() {
     .setTitle('Hotel Reservation API')
     .setDescription(
       [
-        'Staff and admin APIs for HarborView Hotel operations.',
+        'Staff and admin APIs for HotelHub operations.',
         '',
         '**Authentication:** **POST /api/auth/login** with body `{ "email", "password" }` (e.g. `admin@hotel.local` / `Admin@123`).',
         'Response includes **accessToken** and sets httpOnly cookie **`' + cookieName + '`**.',

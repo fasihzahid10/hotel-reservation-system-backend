@@ -36,8 +36,14 @@ export class RoomTypesService {
   create(dto: CreateRoomTypeDto) {
     return this.prisma.roomType.create({
       data: {
-        ...dto,
+        name: dto.name,
+        description: dto.description,
+        capacity: dto.capacity,
         basePrice: dto.basePrice,
+        amenities: dto.amenities,
+        ...(dto.imageUrl !== undefined && dto.imageUrl !== null && dto.imageUrl !== ''
+          ? { imageUrl: dto.imageUrl }
+          : {}),
       },
     });
   }

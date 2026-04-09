@@ -27,6 +27,7 @@ async function main() {
       basePrice: '89.00',
       amenities: ['Queen Bed', 'Wi-Fi', 'Desk', 'Smart TV', 'Rain Shower'],
       roomNumbers: ['101', '102', '103', '104'],
+      imageUrl: '/room-placeholders/1.jpg',
     },
     {
       name: 'Executive Suite',
@@ -35,6 +36,7 @@ async function main() {
       basePrice: '169.00',
       amenities: ['King Bed', 'Lounge Area', 'Coffee Machine', 'Smart TV', 'Mini Bar'],
       roomNumbers: ['201', '202', '203'],
+      imageUrl: '/room-placeholders/2.jpg',
     },
     {
       name: 'Family Room',
@@ -43,6 +45,7 @@ async function main() {
       basePrice: '199.00',
       amenities: ['Two Double Beds', 'Wi-Fi', 'Mini Fridge', 'Smart TV', 'Dining Nook'],
       roomNumbers: ['301', '302', '303'],
+      imageUrl: '/room-placeholders/3.jpg',
     },
   ];
 
@@ -54,6 +57,7 @@ async function main() {
         capacity: roomType.capacity,
         basePrice: roomType.basePrice,
         amenities: roomType.amenities,
+        imageUrl: roomType.imageUrl,
       },
       create: {
         name: roomType.name,
@@ -61,6 +65,7 @@ async function main() {
         capacity: roomType.capacity,
         basePrice: roomType.basePrice,
         amenities: roomType.amenities,
+        imageUrl: roomType.imageUrl,
       },
     });
 

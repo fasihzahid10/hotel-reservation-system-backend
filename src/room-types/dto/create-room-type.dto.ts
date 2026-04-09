@@ -1,4 +1,14 @@
-import { ArrayNotEmpty, IsArray, IsInt, IsNumber, IsPositive, IsString, MaxLength, Min } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsInt,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class CreateRoomTypeDto {
   @IsString()
@@ -21,4 +31,9 @@ export class CreateRoomTypeDto {
   @ArrayNotEmpty()
   @IsString({ each: true })
   amenities!: string[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2048)
+  imageUrl?: string | null;
 }
