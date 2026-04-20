@@ -8,8 +8,16 @@ datasource db {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   STAFF
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  ONLINE_TRANSFER
+  PAY_ONLINE
 }
 
 enum HousekeepingStatus {
@@ -90,8 +98,14 @@ model Reservation {
   notes            String?
   totalAmount      Decimal           @db.Decimal(10, 2)
   status           ReservationStatus @default(CONFIRMED)
+  /// How the stay was paid when created by staff (public PayTabs flow uses PAY_ONLINE when applicable).
+  paymentMethod    PaymentMethod?
   /// PayTabs transaction reference after successful authorization (Hosted Payment Page).
   paytabsTranRef   String?
+  /// Set when the guest is checked in at the front desk.
+  checkedInAt      DateTime?
+  /// Set when the guest is checked out at the front desk.
+  checkedOutAt     DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   guest            Guest             @relation(fields: [guestId], references: [id], onDelete: Restrict)

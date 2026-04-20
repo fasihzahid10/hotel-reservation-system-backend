@@ -2,6 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { HousekeepingStatus, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { getTodayBounds } from '../common/utils/date';
+import type { AuthenticatedUser } from '../common/decorators/current-user.decorator';
+import { AppRole } from '../common/enums';
+import { ReservationsService } from '../reservations/reservations.service';
 
 const PAID_STATUSES: ReservationStatus[] = [
   ReservationStatus.CONFIRMED,
@@ -11,9 +14,17 @@ const PAID_STATUSES: ReservationStatus[] = [
 
 @Injectable()
 export class DashboardService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly reservationsService: ReservationsService,
+  ) {}
 
-  async getSummary() {
+  getReservationTabStats() {
+    return this.reservationsService.getStatsSummary();
+  }
+
+  async getSummary(user: AuthenticatedUser) {
+    const showFinancials = user.role === AppRole.SUPER_ADMIN;
     const { start, end } = getTodayBounds();
 
     const [
@@ -27,6 +38,7 @@ export class DashboardService {
       recentReservations,
       totalRevenueAgg,
       transactionCount,
+      bookedRooms,
       availableCount,
       occupiedCount,
       reservedCount,
@@ -52,21 +64,23 @@ export class DashboardService {
       this.prisma.reservation.count({
         where: { status: { in: [ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN] } },
       }),
-      this.prisma.reservation.aggregate({
-        _sum: { totalAmount: true },
-        where: {
-          status: {
-            in: [ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN, ReservationStatus.CHECKED_OUT],
-          },
-          checkInDate: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
-            lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
-          },
-        },
-      }),
+      showFinancials
+        ? this.prisma.reservation.aggregate({
+            _sum: { totalAmount: true },
+            where: {
+              status: {
+                in: [ReservationStatus.CONFIRMED, ReservationStatus.CHECKED_IN, ReservationStatus.CHECKED_OUT],
+              },
+              checkInDate: {
+                gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+                lt: new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1),
+              },
+            },
+          })
+        : Promise.resolve({ _sum: { totalAmount: null } }),
       this.prisma.reservation.findMany({
         orderBy: { createdAt: 'desc' },
-        take: 5,
+        take: 8,
         include: {
           guest: true,
           reservationRooms: {
@@ -80,12 +94,29 @@ export class DashboardService {
           },
         },
       }),
-      this.prisma.reservation.aggregate({
-        _sum: { totalAmount: true },
-        where: { status: { in: PAID_STATUSES } },
-      }),
-      this.prisma.reservation.count({
-        where: { status: { in: PAID_STATUSES } },
+      showFinancials
+        ? this.prisma.reservation.aggregate({
+            _sum: { totalAmount: true },
+            where: { status: { in: PAID_STATUSES } },
+          })
+        : Promise.resolve({ _sum: { totalAmount: null } }),
+      showFinancials
+        ? this.prisma.reservation.count({
+            where: { status: { in: PAID_STATUSES } },
+          })
+        : Promise.resolve(0),
+      this.prisma.reservationRoom.count({
+        where: {
+          reservation: {
+            status: {
+              in: [
+                ReservationStatus.PENDING,
+                ReservationStatus.CONFIRMED,
+                ReservationStatus.CHECKED_IN,
+              ],
+            },
+          },
+        },
       }),
       this.prisma.room.count({ where: { housekeepingStatus: HousekeepingStatus.AVAILABLE } }),
       this.prisma.room.count({ where: { housekeepingStatus: HousekeepingStatus.OCCUPIED } }),
@@ -134,13 +165,14 @@ export class DashboardService {
         totalRooms,
         occupiedRooms,
         availableRooms,
+        bookedRooms,
         arrivalsToday,
         departuresToday,
         activeReservations,
         occupancyRate,
-        monthRevenue: Number(monthRevenueAggregate._sum.totalAmount ?? 0),
-        totalRevenue: Number(totalRevenueAgg._sum.totalAmount ?? 0),
-        transactionCount,
+        monthRevenue: showFinancials ? Number(monthRevenueAggregate._sum.totalAmount ?? 0) : 0,
+        totalRevenue: showFinancials ? Number(totalRevenueAgg._sum.totalAmount ?? 0) : undefined,
+        transactionCount: showFinancials ? transactionCount : undefined,
         roomStatusBreakdown: {
           available: availableCount,
           occupied: occupiedCount,

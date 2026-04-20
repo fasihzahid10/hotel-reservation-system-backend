@@ -78,7 +78,8 @@ async function bootstrap() {
   app.enableShutdownHooks();
 
   const port = configService.get<number>('PORT') ?? 4000;
-  await app.listen(port);
+  // Bind all interfaces so Docker / Render / reverse proxies can reach the process (avoids EADDRINUSE/502 mismatches vs localhost-only).
+  await app.listen(port, '0.0.0.0');
   console.log(`Backend running on http://localhost:${port}/api`);
 }
 

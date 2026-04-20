@@ -1,8 +1,9 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { HousekeepingStatus, ReservationStatus } from '@prisma/client';
+import { HousekeepingStatus, PaymentMethod, ReservationStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { normalizeDateRange, calculateNights } from '../common/utils/date';
+import { AppPaymentMethod } from '../common/enums';
 import { CreatePublicReservationDto } from './dto/create-public-reservation.dto';
 import { SearchAvailabilityDto } from './dto/search-availability.dto';
 import { ListReservationsDto } from './dto/list-reservations.dto';
@@ -85,6 +86,47 @@ export class ReservationsService {
     };
 
     return { roomTypes: filtered, meta };
+  }
+
+  private mapAppPaymentMethod(method?: AppPaymentMethod): PaymentMethod | null {
+    if (!method) return null;
+    const map: Record<AppPaymentMethod, PaymentMethod> = {
+      [AppPaymentMethod.CASH]: PaymentMethod.CASH,
+      [AppPaymentMethod.CARD]: PaymentMethod.CARD,
+      [AppPaymentMethod.ONLINE_TRANSFER]: PaymentMethod.ONLINE_TRANSFER,
+      [AppPaymentMethod.PAY_ONLINE]: PaymentMethod.PAY_ONLINE,
+    };
+    return map[method] ?? null;
+  }
+
+  async getStatsSummary() {
+    const [grouped, bookedRooms, availableRooms] = await Promise.all([
+      this.prisma.reservation.groupBy({
+        by: ['status'],
+        _count: { _all: true },
+      }),
+      this.prisma.reservationRoom.count({
+        where: {
+          reservation: {
+            status: {
+              in: [
+                ReservationStatus.PENDING,
+                ReservationStatus.CONFIRMED,
+                ReservationStatus.CHECKED_IN,
+              ],
+            },
+          },
+        },
+      }),
+      this.prisma.room.count({ where: { housekeepingStatus: HousekeepingStatus.AVAILABLE } }),
+    ]);
+
+    const counts: Record<string, number> = {};
+    for (const row of grouped) {
+      counts[row.status] = row._count._all;
+    }
+
+    return { counts, bookedRooms, availableRooms };
   }
 
   listReservations(filters: ListReservationsDto) {
@@ -198,6 +240,11 @@ export class ReservationsService {
     }
 
     const initialStatus = withPayment ? ReservationStatus.PENDING : ReservationStatus.CONFIRMED;
+    const reservationPaymentMethod: PaymentMethod | null = withPayment
+      ? PaymentMethod.PAY_ONLINE
+      : performedById
+        ? (this.mapAppPaymentMethod(dto.paymentMethod) ?? PaymentMethod.CASH)
+        : null;
 
     const reservation = await this.prisma.$transaction(async (tx) => {
       const guest = await tx.guest.upsert({
@@ -226,6 +273,7 @@ export class ReservationsService {
           notes: dto.notes,
           totalAmount,
           status: initialStatus,
+          paymentMethod: reservationPaymentMethod,
           reservationRooms: {
             create: availableRooms.map((room) => ({
               roomId: room.id,
@@ -311,7 +359,7 @@ export class ReservationsService {
     const updated = await this.prisma.$transaction(async (tx) => {
       const savedReservation = await tx.reservation.update({
         where: { id },
-        data: { status: ReservationStatus.CHECKED_IN },
+        data: { status: ReservationStatus.CHECKED_IN, checkedInAt: new Date() },
         include: {
           guest: true,
           reservationRooms: {
@@ -357,7 +405,7 @@ export class ReservationsService {
     const updated = await this.prisma.$transaction(async (tx) => {
       const savedReservation = await tx.reservation.update({
         where: { id },
-        data: { status: ReservationStatus.CHECKED_OUT },
+        data: { status: ReservationStatus.CHECKED_OUT, checkedOutAt: new Date() },
         include: {
           guest: true,
           reservationRooms: {

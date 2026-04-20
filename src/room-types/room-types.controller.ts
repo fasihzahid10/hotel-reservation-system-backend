@@ -35,8 +35,8 @@ export class RoomTypesController {
   @Post()
   @ApiSessionAuth()
   @ApiForbiddenResponse({ description: 'ADMIN only.' })
-  @Roles(AppRole.ADMIN)
-  @ApiOperation({ summary: 'Create room type', description: 'ADMIN only.' })
+  @Roles(AppRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Create room type', description: 'SUPER_ADMIN only.' })
   @ApiResponse({ status: 201, description: 'Room type created.' })
   create(@Body() dto: CreateRoomTypeDto) {
     return this.roomTypesService.create(dto);
@@ -45,8 +45,8 @@ export class RoomTypesController {
   @Patch(':id')
   @ApiSessionAuth()
   @ApiForbiddenResponse({ description: 'ADMIN only.' })
-  @Roles(AppRole.ADMIN)
-  @ApiOperation({ summary: 'Update room type', description: 'ADMIN only.' })
+  @Roles(AppRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Update room type', description: 'SUPER_ADMIN only.' })
   @ApiParam({ name: 'id', description: 'Room type id (cuid)' })
   @ApiResponse({ status: 200, description: 'Room type updated.' })
   update(@Param('id') id: string, @Body() dto: UpdateRoomTypeDto) {
@@ -56,8 +56,8 @@ export class RoomTypesController {
   @Delete(':id')
   @ApiSessionAuth()
   @ApiForbiddenResponse({ description: 'ADMIN only.' })
-  @Roles(AppRole.ADMIN)
-  @ApiOperation({ summary: 'Delete room type', description: 'ADMIN only.' })
+  @Roles(AppRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Delete room type', description: 'SUPER_ADMIN only.' })
   @ApiParam({ name: 'id', description: 'Room type id (cuid)' })
   @ApiResponse({ status: 200, description: 'Room type removed.' })
   remove(@Param('id') id: string) {

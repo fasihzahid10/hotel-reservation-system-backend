@@ -25,7 +25,12 @@ export class RolesGuard implements CanActivate {
       throw new ForbiddenException('You must be signed in to perform this action.');
     }
 
-    if (!roles.includes(user.role as AppRole)) {
+    const userRole = user.role as AppRole;
+    if (userRole === AppRole.SUPER_ADMIN) {
+      return true;
+    }
+
+    if (!roles.includes(userRole)) {
       throw new ForbiddenException(
         `This action requires role ${roles.join(' or ')}. Your account is ${user.role}.`,
       );

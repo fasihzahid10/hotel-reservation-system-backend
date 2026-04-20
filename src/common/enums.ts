@@ -1,6 +1,14 @@
 export enum AppRole {
+  SUPER_ADMIN = 'SUPER_ADMIN',
   ADMIN = 'ADMIN',
   STAFF = 'STAFF',
+}
+
+export enum AppPaymentMethod {
+  CASH = 'CASH',
+  CARD = 'CARD',
+  ONLINE_TRANSFER = 'ONLINE_TRANSFER',
+  PAY_ONLINE = 'PAY_ONLINE',
 }
 
 export enum AppRoomStatus {

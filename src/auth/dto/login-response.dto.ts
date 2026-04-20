@@ -11,7 +11,7 @@ export class LoginResponseDto {
   @ApiProperty({ example: 'System Administrator' })
   fullName!: string;
 
-  @ApiProperty({ enum: AppRole, example: AppRole.ADMIN })
+  @ApiProperty({ enum: AppRole, example: AppRole.SUPER_ADMIN })
   role!: AppRole;
 
   @ApiProperty({

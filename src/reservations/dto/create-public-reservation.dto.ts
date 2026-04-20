@@ -1,4 +1,5 @@
-import { IsBoolean, IsDateString, IsEmail, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { IsBoolean, IsDateString, IsEmail, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min } from 'class-validator';
+import { AppPaymentMethod } from '../../common/enums';
 
 export class CreatePublicReservationDto {
   @IsDateString()
@@ -55,4 +56,12 @@ export class CreatePublicReservationDto {
   @IsOptional()
   @IsBoolean()
   withPayment?: boolean;
+
+  /**
+   * Staff bookings (POST /reservations): how the guest paid or will pay.
+   * Ignored for public flow when PayTabs handles payment.
+   */
+  @IsOptional()
+  @IsEnum(AppPaymentMethod)
+  paymentMethod?: AppPaymentMethod;
 }

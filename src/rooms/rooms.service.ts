@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
 import { UpdateRoomStatusDto } from './dto/update-room-status.dto';
+import { UpdateRoomPhotoDto } from './dto/update-room-photo.dto';
 
 @Injectable()
 export class RoomsService {
@@ -77,6 +78,18 @@ export class RoomsService {
       include: {
         roomType: true,
       },
+    });
+  }
+
+  async updatePhoto(id: string, dto: UpdateRoomPhotoDto) {
+    const room = await this.prisma.room.findUnique({ where: { id } });
+    if (!room) {
+      throw new NotFoundException(`No room found with id "${id}".`);
+    }
+    return this.prisma.room.update({
+      where: { id },
+      data: { imageUrl: dto.imageUrl ?? null },
+      include: { roomType: true },
     });
   }
 

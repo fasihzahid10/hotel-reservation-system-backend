@@ -5,6 +5,7 @@ import { AppRole } from '../common/enums';
 import { ApiSessionAuth } from '../swagger/api-session-auth.decorator';
 import { CreateRoomDto } from './dto/create-room.dto';
 import { UpdateRoomDto } from './dto/update-room.dto';
+import { UpdateRoomPhotoDto } from './dto/update-room-photo.dto';
 import { UpdateRoomStatusDto } from './dto/update-room-status.dto';
 import { RoomsService } from './rooms.service';
 
@@ -23,8 +24,8 @@ export class RoomsController {
   }
 
   @Post()
-  @Roles(AppRole.ADMIN)
-  @ApiOperation({ summary: 'Create room', description: 'ADMIN only.' })
+  @Roles(AppRole.SUPER_ADMIN)
+  @ApiOperation({ summary: 'Create room', description: 'SUPER_ADMIN only.' })
   @ApiResponse({ status: 201, description: 'Room created.' })
   @ApiResponse({ status: 400, description: 'Validation error.' })
   create(@Body() dto: CreateRoomDto) {
@@ -40,6 +41,15 @@ export class RoomsController {
     return this.roomsService.findOne(id);
   }
 
+  @Patch(':id/photo')
+  @Roles(AppRole.SUPER_ADMIN, AppRole.ADMIN, AppRole.STAFF)
+  @ApiOperation({ summary: 'Update room catalog photo URL', description: 'Front desk or super admin.' })
+  @ApiParam({ name: 'id', description: 'Room id (cuid)' })
+  @ApiResponse({ status: 200, description: 'Room updated.' })
+  updatePhoto(@Param('id') id: string, @Body() dto: UpdateRoomPhotoDto) {
+    return this.roomsService.updatePhoto(id, dto);
+  }
+
   @Patch(':id/status')
   @Roles(AppRole.ADMIN, AppRole.STAFF)
   @ApiOperation({ summary: 'Update housekeeping status', description: 'ADMIN or STAFF.' })
@@ -51,8 +61,11 @@ export class RoomsController {
   }
 
   @Patch(':id')
-  @Roles(AppRole.ADMIN, AppRole.STAFF)
-  @ApiOperation({ summary: 'Update room', description: 'Partial update (number, floor, type, status, image URL).' })
+  @Roles(AppRole.SUPER_ADMIN)
+  @ApiOperation({
+    summary: 'Update room (inventory)',
+    description: 'SUPER_ADMIN only — room number, floor, type, or full field changes.',
+  })
   @ApiParam({ name: 'id', description: 'Room id (cuid)' })
   @ApiResponse({ status: 200, description: 'Room updated.' })
   @ApiResponse({ status: 404, description: 'Room not found.' })

@@ -35,6 +35,18 @@ function prismaKnownMessage(error: Prisma.PrismaClientKnownRequestError): { stat
         status: HttpStatus.BAD_REQUEST,
         message: 'The change would break a required relation between records.',
       };
+    case 'P2022': {
+      const column = error.meta?.column;
+      const modelName = error.meta?.modelName;
+      const detail =
+        column != null && modelName != null
+          ? ` Missing column "${String(column)}" on ${String(modelName)}.`
+          : ' ';
+      return {
+        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        message: `The database schema is out of date.${detail}Run \`npx prisma db push\` (dev) or \`npx prisma migrate deploy\` (prod) against this DATABASE_URL, then restart the server.`,
+      };
+    }
     default:
       return {
         status: HttpStatus.BAD_REQUEST,
@@ -77,7 +89,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       const mapped = prismaKnownMessage(exception);
       status = mapped.status;
       message = mapped.message;
-      errorLabel = status === HttpStatus.CONFLICT ? 'Conflict' : status === HttpStatus.NOT_FOUND ? 'Not Found' : 'Bad Request';
+      errorLabel =
+        status === HttpStatus.CONFLICT
+          ? 'Conflict'
+          : status === HttpStatus.NOT_FOUND
+            ? 'Not Found'
+            : status === HttpStatus.INTERNAL_SERVER_ERROR
+              ? 'Internal Server Error'
+              : 'Bad Request';
     } else if (exception instanceof Prisma.PrismaClientValidationError) {
       status = HttpStatus.BAD_REQUEST;
       message = 'Invalid data format (for example, a bad ID or number). Check your request and try again.';

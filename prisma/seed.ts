@@ -1,23 +1,10 @@
-import { PrismaClient, Role, HousekeepingStatus, ReservationStatus } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
+import { PrismaClient, HousekeepingStatus, ReservationStatus } from '@prisma/client';
+import { seedUsers } from './seed-users';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  const adminPasswordHash = await bcrypt.hash('Admin@123', 10);
-  const staffPasswordHash = await bcrypt.hash('Staff@123', 10);
-
-  await prisma.user.upsert({
-    where: { email: 'admin@hotel.local' },
-    update: { fullName: 'System Administrator', passwordHash: adminPasswordHash, role: Role.ADMIN },
-    create: { email: 'admin@hotel.local', fullName: 'System Administrator', passwordHash: adminPasswordHash, role: Role.ADMIN },
-  });
-
-  await prisma.user.upsert({
-    where: { email: 'staff@hotel.local' },
-    update: { fullName: 'Front Desk Staff', passwordHash: staffPasswordHash, role: Role.STAFF },
-    create: { email: 'staff@hotel.local', fullName: 'Front Desk Staff', passwordHash: staffPasswordHash, role: Role.STAFF },
-  });
+  await seedUsers(prisma);
 
   const roomTypes = [
     {
